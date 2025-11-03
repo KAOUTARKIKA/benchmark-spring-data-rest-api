@@ -1,23 +1,17 @@
 package com.tp.benchmarkspringdatarestapi.controller;
 
-import com.tp.benchmarkspringdatarestapi.dto.PageResponse;
 import com.tp.benchmarkspringdatarestapi.entity.Item;
 import com.tp.benchmarkspringdatarestapi.service.ItemService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.BasePathAwareController;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
+import java.util.List;
 import java.util.Optional;
 
-/**
- * Controller custom pour Item afin de maintenir la compatibilité
- * avec les endpoints des variantes Jersey et Spring MVC.
- *
- * @BasePathAwareController évite les conflits avec Spring Data REST.
- */
 @BasePathAwareController
 @RequestMapping("/items")
 public class ItemController {
@@ -30,12 +24,12 @@ public class ItemController {
     }
 
     @GetMapping
-    public ResponseEntity<PageResponse<Item>> list(
+    public ResponseEntity<List<Item>> list(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "10") int size) {
 
-        PageResponse<Item> result = (categoryId != null)
+        List<Item> result = (categoryId != null)
                 ? itemService.listByCategory(categoryId, page, size)
                 : itemService.list(page, size);
 
@@ -53,7 +47,7 @@ public class ItemController {
     @PostMapping
     public ResponseEntity<Item> create(@Valid @RequestBody Item item) {
         Item created = itemService.create(item);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.created(URI.create("/items/" + created.getId())).body(created);
     }
 
     @PutMapping("/{id}")

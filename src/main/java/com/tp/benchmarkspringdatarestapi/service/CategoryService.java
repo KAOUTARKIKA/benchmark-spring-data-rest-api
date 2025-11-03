@@ -1,15 +1,16 @@
 package com.tp.benchmarkspringdatarestapi.service;
 
-import com.tp.benchmarkspringdatarestapi.dto.PageResponse;
 import com.tp.benchmarkspringdatarestapi.entity.Category;
 import com.tp.benchmarkspringdatarestapi.repository.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -23,15 +24,10 @@ public class CategoryService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<Category> list(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public List<Category> list(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id"));
         Page<Category> result = repository.findAll(pageable);
-        return new PageResponse<>(
-                result.getContent(),
-                result.getTotalElements(),
-                page,
-                size
-        );
+        return result.getContent();
     }
 
     @Transactional(readOnly = true)

@@ -1,25 +1,21 @@
 package com.tp.benchmarkspringdatarestapi.controller;
 
-import com.tp.benchmarkspringdatarestapi.dto.PageResponse;
 import com.tp.benchmarkspringdatarestapi.entity.Category;
 import com.tp.benchmarkspringdatarestapi.entity.Item;
 import com.tp.benchmarkspringdatarestapi.service.CategoryService;
 import com.tp.benchmarkspringdatarestapi.service.ItemService;
 import jakarta.validation.Valid;
+import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.BasePathAwareController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
+import java.util.List;
 import java.util.Optional;
 
-/**
- * Controller custom pour Category afin de maintenir la compatibilité
- * avec les endpoints des variantes Jersey et Spring MVC.
- *
- * @BasePathAwareController évite les conflits avec Spring Data REST.
- */
 @BasePathAwareController
 @RequestMapping("/categories")
 public class CategoryController {
@@ -34,15 +30,15 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<PageResponse<Category>> list(
+    public ResponseEntity<List<Category>> list(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        PageResponse<Category> result = categoryService.list(page, size);
+            @RequestParam(defaultValue = "10") int size) {
+        List<Category> result = categoryService.list(page, size);
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Category> get(@PathVariable Long id) {
+    public ResponseEntity<Category> get(@PathParam("id") Long id) {
         Optional<Category> category = categoryService.get(id);
         return category
                 .map(ResponseEntity::ok)
@@ -52,7 +48,7 @@ public class CategoryController {
     @PostMapping
     public ResponseEntity<Category> create(@Valid @RequestBody Category category) {
         Category created = categoryService.create(category);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.created(URI.create("/categories/" + created.getId())).body(created);
     }
 
     @PutMapping("/{id}")
@@ -73,15 +69,12 @@ public class CategoryController {
                 : ResponseEntity.notFound().build();
     }
 
-    /**
-     * Endpoint relationnel : GET /categories/{id}/items?page=&size=
-     */
     @GetMapping("/{id}/items")
-    public ResponseEntity<PageResponse<Item>> listItems(
+    public ResponseEntity<List<Item>> listItems(
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        PageResponse<Item> result = itemService.listByCategory(id, page, size);
+            @RequestParam(defaultValue = "10") int size) {
+        List<Item> result = itemService.listByCategory(id, page, size);
         return ResponseEntity.ok(result);
     }
 }

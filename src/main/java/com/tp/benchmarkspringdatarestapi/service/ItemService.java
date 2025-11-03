@@ -1,6 +1,5 @@
 package com.tp.benchmarkspringdatarestapi.service;
 
-import com.tp.benchmarkspringdatarestapi.dto.PageResponse;
 import com.tp.benchmarkspringdatarestapi.entity.Category;
 import com.tp.benchmarkspringdatarestapi.entity.Item;
 import com.tp.benchmarkspringdatarestapi.repository.CategoryRepository;
@@ -10,9 +9,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -22,7 +23,7 @@ public class ItemService {
     private final CategoryRepository categoryRepository;
 
     // Flag pour activer/désactiver le JOIN FETCH (anti-N+1)
-    @Value("${benchmark.use-join-fetch:true}")
+    @Value("${benchmark.use-join-fetch:false}")
     private boolean useJoinFetch;
 
     @Autowired
@@ -32,20 +33,15 @@ public class ItemService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<Item> list(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public List<Item> list(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id"));
         Page<Item> result = repository.findAll(pageable);
-        return new PageResponse<>(
-                result.getContent(),
-                result.getTotalElements(),
-                page,
-                size
-        );
+        return result.getContent();
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<Item> listByCategory(Long categoryId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public List<Item> listByCategory(Long categoryId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id"));
 
         Page<Item> result;
         if (useJoinFetch) {
@@ -56,12 +52,7 @@ public class ItemService {
             result = repository.findByCategoryId(categoryId, pageable);
         }
 
-        return new PageResponse<>(
-                result.getContent(),
-                result.getTotalElements(),
-                page,
-                size
-        );
+        return result.getContent();
     }
 
     @Transactional(readOnly = true)
@@ -91,7 +82,6 @@ public class ItemService {
 
         Item existing = existingOpt.get();
         existing.setSku(payload.getSku());
-        existing.setName(payload.getName());
         existing.setPrice(payload.getPrice());
         existing.setStock(payload.getStock());
 
